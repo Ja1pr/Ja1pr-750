@@ -1,2 +1,5 @@
 # Ja1pr-750
-My very own cipher
+Completely new cipher
+! Unpolished version! = there are some mistakes in documentation and the maps generator is disabled (not done)
+
+Expect full version in few days
