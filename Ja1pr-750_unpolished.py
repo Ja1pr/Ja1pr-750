@@ -215,16 +215,3 @@ if co==1:
      print(odsifrovat(sifr,klic,klic2,klic3,abeceda))
 else:
      print(sifrovat(sifr,klic,klic2,klic3,abeceda))
-
-
-
-
-
-
-
-
-
-
-
-
-
