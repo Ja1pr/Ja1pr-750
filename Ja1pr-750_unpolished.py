@@ -4,6 +4,7 @@ import secrets
 def remove2(vec):
     return vec.replace("2", "")
 
+
 def mix_szn(szn):
     pocet = len(szn)
     for i in range(pocet):
@@ -31,11 +32,18 @@ def sifrovat(slovo,klic,klic2,klic3,abeceda , supress="abcdefghijklmnop"):
     b=0
     c=0
     vysledek=""
+    
+    labeceda =list(abeceda)
+    utf=slovo.encode("utf-8")
+    text=""
+    for i in utf:
+      text=text+labeceda[i]
+    
     lista = list(abeceda)
-    for i in range(len(slovo)):
+    for i in range(len(text)):
         
 
-        pozice=lista.index(slovo[i])
+        pozice=lista.index(text[i])
         posun1 = int((lista.index(klic[a])) % len(abeceda))
         #lista=rotate(lista,klic[a])
         
@@ -187,6 +195,13 @@ def odsifrovat(slovo,klic,klic2,klic3,abeceda ,supress="abcdefghijklmnop"):
         c=c+1
         if c >= len(klic3):
             c = 0
+            
+    
+    labeceda=list(abeceda)
+    text=[]
+    for i in vysledek:
+      text.append(labeceda.index(i))
+    vysledek =bytes(text).decode("utf-8")
     # </>Vigenere < >
 
     return vysledek
@@ -215,3 +230,33 @@ if co==1:
      print(odsifrovat(sifr,klic,klic2,klic3,abeceda))
 else:
      print(sifrovat(sifr,klic,klic2,klic3,abeceda))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
