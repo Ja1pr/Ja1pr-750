@@ -4,6 +4,11 @@ import secrets
 def remove2(vec):
     return vec.replace("2", "")
 
+def randomsalt(szn,lenght):
+  a=""
+  for i in range(lenght):
+    a=a+secrets.choice(szn)
+  return a
 
 def mix_szn(szn):
     pocet = len(szn)
@@ -32,8 +37,12 @@ def sifrovat(slovo,klic,klic2,klic3,abeceda , supress="abcdefghijklmnop"):
     b=0
     c=0
     vysledek=""
-    
+    #abeceda=mix_szn(list(abeceda))
+    #print(abeceda)
+    klicedelka=min(len(klic)*len(klic2)*len(klic3),100)
     labeceda =list(abeceda)
+    
+    slovo=randomsalt(labeceda,klicedelka)+slovo
     utf=slovo.encode("utf-8")
     text=""
     for i in utf:
@@ -45,7 +54,7 @@ def sifrovat(slovo,klic,klic2,klic3,abeceda , supress="abcdefghijklmnop"):
 
         pozice=lista.index(text[i])
         posun1 = int((lista.index(klic[a])) % len(abeceda))
-        #lista=rotate(lista,klic[a])
+        lista=rotate(lista,klic[a])
         
         posun2 = int((lista.index(klic2[b]) ^ lista.index(klic3[c])) % len(abeceda))
         
@@ -67,6 +76,7 @@ def sifrovat(slovo,klic,klic2,klic3,abeceda , supress="abcdefghijklmnop"):
             b = 0
         if c >= len(klic3):
             c = 0
+            
     #</>Vigenere< >
 
 
@@ -153,18 +163,20 @@ def odsifrovat(slovo,klic,klic2,klic3,abeceda ,supress="abcdefghijklmnop"):
                 g = g + l
         kĂłd2 = kĂłd2 + sifr[g]
     #</>Base16<>
-
+    
     #< >Vigenere < >
     a = 0
     b=0
     c=0
+    klicedelka=min(len(klic)*len(klic2)*len(klic3),100)
+    
     vysledek = ""
     lista = list(abeceda)
     lista2 = list(abeceda)
     for i in range(len(kĂłd2)):
         
         posun1 = int((lista.index(klic[a])) % len(abeceda))
-        #lista = rotate(lista, klic[a])
+        lista = rotate(lista, klic[a])
         
         posun2 = (lista.index(klic2[b]) ^ lista.index(klic3[c])) % len(abeceda)
         
@@ -202,6 +214,9 @@ def odsifrovat(slovo,klic,klic2,klic3,abeceda ,supress="abcdefghijklmnop"):
     for i in vysledek:
       text.append(labeceda.index(i))
     vysledek =bytes(text).decode("utf-8")
+    
+    
+    vysledek=vysledek[klicedelka:]
     # </>Vigenere < >
 
     return vysledek
@@ -230,6 +245,7 @@ if co==1:
      print(odsifrovat(sifr,klic,klic2,klic3,abeceda))
 else:
      print(sifrovat(sifr,klic,klic2,klic3,abeceda))
+
 
 
 
