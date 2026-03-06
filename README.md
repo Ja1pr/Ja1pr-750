@@ -5,4 +5,5 @@ Completely new cipher
 Expect full version in few days
 
 
-New update- added utf-8 support
+New update - added utf-8 support
+Update - added salt to the start of the message, re-enforcing avalanche effect
