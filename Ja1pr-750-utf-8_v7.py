@@ -37,11 +37,11 @@ def rotate_back(list, n):
 
 
 def sifrovat(data, key1, key2, key3, abeceda, supress="abcdefghijklmnop"):
-    time1 = time.time()
+    time1 = time.time() #Time measuring
     datalen = len(data)
     # < >Vigenere< >
     a,b,c = 0, 0, 0 # Three variables for keys
-    vysledek = ""   #Final output from vigenere
+    vysledekl = []   #Final output from vigenere
 
     #Adding salt
     key1elenght = min(len(key1) * len(key2) * len(key3), 100)  #Ensuring the salt will be one repeating sequence of keys, if too long it jumps to 100
@@ -57,10 +57,10 @@ def sifrovat(data, key1, key2, key3, abeceda, supress="abcdefghijklmnop"):
     for i in range(1, len(data)):
         data[i] = data[i] ^ data[i - 1]
 
-
-    text = ""
+    textl = []
     for i in data:                       #Translates back to characters from extended ascii
-        text = text + labeceda[i]       #This way is it ensured that messages can use any characters from utf-8 (including emoji´s and special characters)
+        textl.append(labeceda[i])       #This way is it ensured that messages can use any characters from utf-8 (including emoji´s and special characters)
+    text = "".join(textl)               #Using .append and .join, as it is faster than +
 
 
     lista = list(abeceda)       #Creates list for mixing
@@ -76,32 +76,26 @@ def sifrovat(data, key1, key2, key3, abeceda, supress="abcdefghijklmnop"):
         #lista = rotate(lista, key2[b])                                             #\
         #lista = rotate_back(lista,key3[c])                                         #/ Some more unnesseary rotations
 
-
-
-        vysledek = vysledek + lista[pozice]                                         #Gets ciphered character
-
+        vysledekl.append(lista[pozice])                                  #Gets ciphered character
 
         a = (a + 1) % len(key1)     #\
         b = (b + 1) % len(key2)     # |> Moving to the next character
         c = (c + 1) % len(key3)     #/
-
-
+    vysledek = "".join(vysledekl) #Using .append and .join, as it is faster than +
     # </>Vigenere< >
 
     # < >Base16< >
-    base161 = ""   #Variable for data in binary state
-    base162 = ""   #Variable for data in normal state
+    base162 = []   #Variable for data in normal state
     sifr = abeceda #Creates map for base16
 
     # Translate to binary
-    for i in vysledek:
-        a = sifr.index(i)                 # Gets number from map (sifr)
-        base161=base161 + format(a,"08b") # Tranalstes number to binary
-
+    base161 = [format(sifr.index(i),"08b") for i in vysledekl] # Translates number to binary
+    base161 = "".join(base161)
     # Translating back to characters
     for b in range(0, len(base161), 4): # Goes through every character of binary data
-        g = int(base161[b: b + 4], 2)   # Decodes binary to number (4 bits to one number between 0-16)
-        base162 += supress[g]           #Adds character from supress with index of the decoded binary to result
+        g = int(base161[b:b+4], 2)   # Decodes binary to number (4 bits to one number between 0-16)
+        base162.append(supress[g])         #Adds character from supress with index of the decoded binary to result
+    base162 = "".join(base162)
     # </>Base16<>
     print("Ciphered data:")
     print("Completed! Time", time.time()-time1, "s, average time for character :", (time.time()-time1)/datalen, "s")
@@ -109,106 +103,70 @@ def sifrovat(data, key1, key2, key3, abeceda, supress="abcdefghijklmnop"):
 
 
 def odsifrovat(data, key1, key2, key3, abeceda, supress="abcdefghijklmnop"):
-    time1 = time.time()
+    time1 = time.time() # Time measuring
     datalen = len(data)
+
     # < >Base16< >
-    base161 = ""
-    base162 = ""
-    sifr = abeceda
+    base161, base162  = [], [""]
+    sifr = abeceda # Gets map
+
     for i in data:
-        a = supress.index(i)
-        add = ""
-        while True:
-            if a % 2 == 1:
-                add = add + "1"
-                a = a - 1
-            else:
-                add = add + "0"
-            a = a // 2
-            if a == 0:
-                break
-        add = add[::-1]
-        while len(add) < 4:
-            add = "0" + add
-        base161 = base161 + add
-    for b in range(0, len(base161), 8):
-        d = ""
-        g = 0
-        for c in range(8):
-            d = d + base161[b + c]
-        d = remove2(d)
-        for k in range(len(d)):
-            l = 0
-            for p in range(len(d) - k):
-                l = 2 * l
-                if l == 0:
-                    l = 1
-            if d[k] == "1":
-                g = g + l
-        base162 = base162 + sifr[g]
+        a = supress.index(i)        # Gets number for coding
+        base161.append(format(a,"04b"))  # Codes number into half bytes
+    base161 = "".join(base161) # Again uses .append because it is faster etc.
+
+    for b in range(0, len(base161), 8): # Goes through every eight character of base161
+        g =  int(base161[b:b+8],2)      #  Translates binary into decimal
+        base162.append(sifr[g])
+    base162 = "".join(base162)  # Once more
     # </>Base16<>
 
     # < >Vigenere < >
-    a = 0
-    b = 0
-    c = 0
+    a, b ,c = 0, 0, 0
     key1elenght = min(len(key1) * len(key2) * len(key3), 100)
 
-    vysledek = ""
-    lista = list(abeceda) #Dynamic aplhabet
-    lista2 = list(abeceda) #Aplhabet backup
+    vysledekl = []
+    lista = list(abeceda) #Dynamic alphabet
+    lista2 = list(abeceda) # Alphabet backup
     for i in range(len(base162)): #For every character
 
-        posun1 = int((lista.index(key1[a])) % len(abeceda))
-
-        lista = rotate(lista, key1[a])
-
-        posun2 = (lista.index(key2[b]) ^ lista.index(key3[c])) % len(abeceda)
-
-        lista[posun1], lista[posun2] = lista[posun2], lista[posun1]
-
-        lista = rotate(lista, abeceda[posun2])
-
+        posun1 = int((lista.index(key1[a])) % len(abeceda))                     # Gets first number for deciphering from key1
+        lista = rotate(lista, key1[a])                                          # Rotates dynamic list
+        posun2 = (lista.index(key2[b]) ^ lista.index(key3[c])) % len(abeceda)   # Gets second number for deciphering from key2 xor key3
+        lista[posun1], lista[posun2] = lista[posun2], lista[posun1]             # Swaps two characters in dynamic list posun1 and posun2
+        lista = rotate(lista, abeceda[posun2])                                  # Rotates dynamic list once more
         # lista = rotate(lista, key2[b])
-
         # lista = rotate_back(lista, key3[c])
 
-        pozice = lista.index(base162[i])
+        pozice = lista.index(base162[i]) #  Position of character after mixing
+        vysledekl.append(lista2[pozice]) #  Gets of character from backup list
+        lista2 = list(lista)        # Saving alphabet state for next character (to decode avalanche effect)
 
-        vysledek = vysledek + lista2[pozice]
+        a = (a + 1) % len(key1)     #\
+        b = (b + 1) % len(key2)     # |> Moving to the next character
+        c = (c + 1) % len(key3)     #/
 
-        lista2 = list(lista)
+    data = [abeceda.index(i) for i in vysledekl] #Translating into numbers for de-avalanche
 
-        a = (a + 1) % len(key1)
-        b = (b + 1) % len(key2)
-        c = (c + 1) % len(key3)
-
-    labeceda = list(abeceda)
-    text = []
-    for i in vysledek:
-        text.append(labeceda.index(i))
-
-    data = list(text)
+    # De-avalanching
     for i in range(len(data) - 1, 0, -1):
         data[i] = data[i] ^ data[i - 1]
+
+    # Using try because of possible errors in transmitting
     try:
-        vysledek = bytes(data).decode("utf-8")
-    except:
-        print(" ")
+        vysledek = bytes(data).decode("utf-8") # Decodes in utf
+    except: # Means utf-8 coding was unsuccesfull
+        print(" ")                                                # Informing user
         print("Critic error, data were damaged or manipulated!")
         print("Returning without utf-8 coding!")
         print("!Warning! Data aren´t valid!")
-        etext = ""
-        ebeceda = abeceda
-        for i in data:  # Translates back to characters from extended ascii
-            etext = etext + ebeceda[i]
-        print(" ")
-        vysledek=etext
+        etext = [abeceda[i] for i in data]  # Emergency translating data into ASCII extended
+        vysledek="".join(etext)
     vysledek = vysledek[key1elenght:]
     print("Completed! Time", time.time() - time1, "s, average time for character :",
-          (time.time() - time1) / datalen, "s")
+          (time.time() - time1) / datalen, "s") # Calculate used time
     print("Deciphered data:")
-    return vysledek
+    return vysledek # Retrurns deciphered data
     # </>Vigenere < >
 
 
@@ -247,10 +205,15 @@ co = int(input("Write 1 for deciphering, or 2 for ciphering > "))
 print("▓▓▓▒▓▒▒▒░▒░░░▒░▒▒▒▓▒▓▓▓▒▓▒▒▒░▒░░░▒░▒▒▒▓▒▓▓▓▒▓▒▒▒░▒░░░▒░▒▒▒▓▒▓▓▓▒▓▒▒▒░▒░░░▒░▒▒▒▓▒▓▓▓▒▓▒▒▒░▒░░░▒░▒▒▒▓▒▓▓▓")
 print("")
 if co == 1:
-
     print(odsifrovat(sifr, key1, key2, key3, abeceda))
 else:
 
-    print(sifrovat(sifr, key1, key2, key3, abeceda))
+    si = (sifrovat(sifr, key1, key2, key3, abeceda))
+    print(si)
+    azn = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    for i in si:
+        azn[supress.index(i)] = azn[supress.index(i)] + 1
+    for a in azn:
+        print(a * 100 / len(si))
 
 
