@@ -8,9 +8,8 @@ class Ja1pr750:
         self.key3 = key3
         self.abeceda = abeceda
         self.supress = supress
+        self.mirror = {char: i for i, char in enumerate(abeceda)} # Creates mirror of lista
 
-    def _remove2(self ,vec):
-        return vec.replace("2", "")
     def _randomsalt(self ,szn, lenght):
         a = ""
         for i in range(lenght):
@@ -24,17 +23,19 @@ class Ja1pr750:
             szn.insert(secrets.randbelow(len(szn)), a)
         print(len(szn))
         return szn
+
     def _rotate(self ,list, n):
-        while not list[0] == n:
-            a = list.pop()
-            list.insert(0, a)
+        idx = self.mirror[n]
+        if idx == 0: return list
+        list = list[idx:] + list[:idx]
+        self.mirror = {znak: i for i, znak in enumerate(list)}
         return list
+
     def _rotate_back(self ,list, n):
         while not list[0] == n:
             a = list.pop(0)
             list.append(a)
         return list
-
 
     def sifrovat(self, data):
         time1 = time.time() #Time measuring
@@ -57,27 +58,32 @@ class Ja1pr750:
         for i in range(1, len(data)):
             data[i] = data[i] ^ data[i - 1]
 
-        textl = []
+        text = []
         for i in data:                       #Translates back to characters from extended ascii
-            textl.append(self.abeceda[i])       #This way is it ensured that messages can use any characters from utf-8 (including emoji´s and special characters)
-        text = "".join(textl)               #Using .append and .join, as it is faster than +
+            text.append(self.abeceda[i])       #This way is it ensured that messages can use any characters from utf-8 (including emoji´s and special characters)
 
 
         lista = list(self.abeceda)       #Creates list for mixing
+        self.mirror = {char: i for i, char in enumerate(lista)} # Creates mirror of lista
+
         for i in range(len(text)):  #Goes through every character of text
 
             #Rotating and mixing
-            pozice = lista.index(text[i])                                               # Position of character before mixing
-            posun1 = int((lista.index(self.key1[a])) % len(self.abeceda))                         # Gets first number for mixing from self.key1
+            pozice = self.mirror[text[i]]                                             # Position of character before mixing
+            posun1 = int((self.mirror[self.key1[a]]) % len(self.abeceda))                         # Gets first number for mixing from self.key1
             lista = self._rotate(lista, self.key1[a])                                              # Rotates mixing list
-            posun2 = int((lista.index(self.key2[b]) ^ lista.index(self.key3[c])) % len(self.abeceda))  # Gets second number for mixing from self.key2 xor self.key3
+            posun2 = int((self.mirror[self.key2[b]] ^ self.mirror[self.key3[c]]) % len(self.abeceda))  # Gets second number for mixing from self.key2 xor self.key3
+
+            znak1,znak2 = lista[posun1], lista[posun2]
             lista[posun1], lista[posun2] = lista[posun2], lista[posun1]                 # Swaps two characters in mixing list posun1 and posun2
+            self.mirror[znak1], self.mirror[znak2] = posun1,posun2
+
+
             lista = self._rotate(lista, self.abeceda[posun2])                                      # Rotates mixing list once more
             #lista = rotate(lista, self.key2[b])                                             #\
             #lista = rotate_back(lista,self.key3[c])                                         #/ Some more unnesseary rotations
 
             vysledekl.append(lista[pozice])                                  #Gets ciphered character
-
             a = (a + 1) % len(self.key1)     #\
             b = (b + 1) % len(self.key2)     # |> Moving to the next character
             c = (c + 1) % len(self.key3)     #/
@@ -85,40 +91,39 @@ class Ja1pr750:
         # </>Vigenere< >
 
         # < >Base16< >
-        base162 = []   #Variable for data in normal state
+        base162, base161 = [],[] #Variable for data in normal state
         sifr = self.abeceda #Creates map for base16
-
+        mirror2 = {znak: i for i, znak in enumerate(self.abeceda)}
         # Translate to binary
-        base161 = [format(sifr.index(i),"08b") for i in vysledekl] # Translates number to binary
-        base161 = "".join(base161)
-        # Translating back to characters
-        for b in range(0, len(base161), 4): # Goes through every character of binary data
-            g = int(base161[b:b+4], 2)   # Decodes binary to number (4 bits to one number between 0-16)
-            base162.append(self.supress[g])         #Adds character from self.supress with index of the decoded binary to result
-        base162 = "".join(base162)
+        for char in vysledekl:
+            value = mirror2[char]
+            hnibble = (value >> 4) & 0x0F
+            lnibble = value & 0x0F
+            base161.append(self.supress[hnibble])
+            base161.append(self.supress[lnibble])
+        base162 = "".join(base161)
+
         # </>Base16<>
         print("Ciphered data:")
         print("Completed! Time", time.time()-time1, "s, average time for character :", (time.time()-time1)/datalen, "s")
-        return base162  # Returns result
+        return base162 # Returns result
 
 
     def odsifrovat(self, data):
         time1 = time.time() # Time measuring
         datalen = len(data)
-
+        smirror = {znak: i for i, znak in enumerate(self.supress)}
         # < >Base16< >
-        base161, base162  = [], [""]
+        base161, base162  = [], []
         sifr = self.abeceda # Gets map
 
-        for i in data:
-            a = self.supress.index(i)        # Gets number for coding
-            base161.append(format(a,"04b"))  # Codes number into half bytes
-        base161 = "".join(base161) # Again uses .append because it is faster etc.
+        for i in range(0, len(data), 2):
+            hnibble = smirror[data[i]]
+            lnibble = smirror[data[i+1]]
+            bytevalue = (hnibble << 4) | lnibble
+            base161.append(self.abeceda[bytevalue])
 
-        for b in range(0, len(base161), 8): # Goes through every eight character of base161
-            g =  int(base161[b:b+8],2)      #  Translates binary into decimal
-            base162.append(sifr[g])
-        base162 = "".join(base162)  # Once more
+        base162 = "".join(base161) # Again uses .append because it is faster etc.
         # </>Base16<>
 
         # < >Vigenere < >
@@ -128,12 +133,19 @@ class Ja1pr750:
         vysledekl = []
         lista = list(self.abeceda) #Dynamic alphabet
         lista2 = list(self.abeceda) # Alphabet backup
+        self.mirror = {char: i for i, char in enumerate(lista)} # Creates mirror of lista
         for i in range(len(base162)): #For every character
 
-            posun1 = int((lista.index(self.key1[a])) % len(self.abeceda))                     # Gets first number for deciphering from self.key1
+            posun1 = int((self.mirror[self.key1[a]]) % len(self.abeceda))                     # Gets first number for deciphering from self.key1
             lista = self._rotate(lista, self.key1[a])                                          # Rotates dynamic list
-            posun2 = (lista.index(self.key2[b]) ^ lista.index(self.key3[c])) % len(self.abeceda)   # Gets second number for deciphering from self.key2 xor self.key3
+            posun2 = (self.mirror[self.key2[b]] ^ self.mirror[self.key3[c]]) % len(self.abeceda)   # Gets second number for deciphering from self.key2 xor self.key3
+
+            znak1 = lista[posun1]
+            znak2 = lista[posun2]
             lista[posun1], lista[posun2] = lista[posun2], lista[posun1]             # Swaps two characters in dynamic list posun1 and posun2
+            self.mirror[znak1] = posun1
+            self.mirror[znak2] = posun2
+
             lista = self._rotate(lista, self.abeceda[posun2])                                  # Rotates dynamic list once more
             # lista = rotate(lista, self.key2[b])
             # lista = rotate_back(lista, self.key3[c])
@@ -141,6 +153,7 @@ class Ja1pr750:
             pozice = lista.index(base162[i]) #  Position of character after mixing
             vysledekl.append(lista2[pozice]) #  Gets of character from backup list
             lista2 = list(lista)        # Saving alphabet state for next character (to decode avalanche effect)
+            self.mirror = {char: i for i, char in enumerate(lista)}  # Creates mirror of lista
 
             a = (a + 1) % len(self.key1)     #\
             b = (b + 1) % len(self.key2)     # |> Moving to the next character
@@ -164,6 +177,10 @@ class Ja1pr750:
             vysledek="".join(etext)
         vysledek = vysledek[keey1elenght:]
         print("Completed! Time", time.time() - time1, "s, average time for character :",
+              (time.time() - time1) / datalen, "s") # Calculate used time
+        print("Deciphered data:")
+        return vysledek # Retrurns deciphered data
+        # </>Vigenere < > 
               (time.time() - time1) / datalen, "s") # Calculate used time
         print("Deciphered data:")
         return vysledek # Retrurns deciphered data
