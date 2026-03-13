@@ -181,7 +181,4 @@ class Ja1pr750:
         print("Deciphered data:")
         return vysledek # Retrurns deciphered data
         # </>Vigenere < > 
-              (time.time() - time1) / datalen, "s") # Calculate used time
-        print("Deciphered data:")
-        return vysledek # Retrurns deciphered data
-        # </>Vigenere < > 
+              
