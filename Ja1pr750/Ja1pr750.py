@@ -52,55 +52,51 @@ class Ja1pr750:
 
         #Utf-8 coding
         utf = data.encode("utf-8")     #Code into numbers from 0 to 256
-
-        #Amplifing the avalanche effect
         data = list(utf)
-        for i in range(1, len(data)):
-            data[i] = data[i] ^ data[i - 1]
+
 
         text = []
-        for i in data:                       #Translates back to characters from extended ascii
-            text.append(self.abeceda[i])       #This way is it ensured that messages can use any characters from utf-8 (including emoji´s and special characters)
-
-
         lista = list(self.abeceda)       #Creates list for mixing
         self.mirror = {char: i for i, char in enumerate(lista)} # Creates mirror of lista
-
-        for i in range(len(text)):  #Goes through every character of text
-
-            #Rotating and mixing
-            pozice = self.mirror[text[i]]                                             # Position of character before mixing
-            posun1 = int((self.mirror[self.key1[a]]) % len(self.abeceda))                         # Gets first number for mixing from self.key1
-            lista = self._rotate(lista, self.key1[a])                                              # Rotates mixing list
-            posun2 = int((self.mirror[self.key2[b]] ^ self.mirror[self.key3[c]]) % len(self.abeceda))  # Gets second number for mixing from self.key2 xor self.key3
-
-            znak1,znak2 = lista[posun1], lista[posun2]
-            lista[posun1], lista[posun2] = lista[posun2], lista[posun1]                 # Swaps two characters in mixing list posun1 and posun2
-            self.mirror[znak1], self.mirror[znak2] = posun1,posun2
-
-
-            lista = self._rotate(lista, self.abeceda[posun2])                                      # Rotates mixing list once more
-            #lista = rotate(lista, self.key2[b])                                             #\
-            #lista = rotate_back(lista,self.key3[c])                                         #/ Some more unnesseary rotations
-
-            vysledekl.append(lista[pozice])                                  #Gets ciphered character
-            a = (a + 1) % len(self.key1)     #\
-            b = (b + 1) % len(self.key2)     # |> Moving to the next character
-            c = (c + 1) % len(self.key3)     #/
-        vysledek = "".join(vysledekl) #Using .append and .join, as it is faster than +
-        # </>Vigenere< >
-
-        # < >Base16< >
-        base162, base161 = [],[] #Variable for data in normal state
-        sifr = self.abeceda #Creates map for base16
+        base162, base161 = [], []  # Variable for data in normal state
         mirror2 = {znak: i for i, znak in enumerate(self.abeceda)}
-        # Translate to binary
-        for char in vysledekl:
-            value = mirror2[char]
+
+        prev = 0
+        for i, by in enumerate(data):
+            current = by ^ prev
+            data[i] = current
+            prev = current
+
+            text.append(self.abeceda[data[i]])  # This way is it ensured that messages can use any characters from utf-8 (including emoji´s and special characters)
+
+            # Rotating and mixing
+            pozice = self.mirror[text[i]]  # Position of character before mixing
+            posun1 = int((self.mirror[self.key1[a]]) % len(self.abeceda))  # Gets first number for mixing from self.key1
+            lista = self._rotate(lista, self.key1[a])  # Rotates mixing list
+            posun2 = int((self.mirror[self.key2[b]] ^ self.mirror[self.key3[c]]) % len(
+                self.abeceda))  # Gets second number for mixing from self.key2 xor self.key3
+
+            znak1, znak2 = lista[posun1], lista[posun2]
+            lista[posun1], lista[posun2] = lista[posun2], lista[
+                posun1]  # Swaps two characters in mixing list posun1 and posun2
+            self.mirror[znak1], self.mirror[znak2] = posun1, posun2
+
+            lista = self._rotate(lista, self.abeceda[posun2])  # Rotates mixing list once more
+            # lista = rotate(lista, self.key2[b])                                             #\
+            # lista = rotate_back(lista,self.key3[c])                                         #/ Some more unnesseary rotations
+
+            vysledekl.append(lista[pozice])  # Gets ciphered character
+            a = (a + 1) % len(self.key1)  # \
+            b = (b + 1) % len(self.key2)  # |> Moving to the next character
+            c = (c + 1) % len(self.key3)  # /
+
+            base1 = vysledekl[i]
+            value = mirror2[base1]
             hnibble = (value >> 4) & 0x0F
             lnibble = value & 0x0F
             base161.append(self.supress[hnibble])
             base161.append(self.supress[lnibble])
+
         base162 = "".join(base161)
 
         # </>Base16<>
@@ -181,4 +177,3 @@ class Ja1pr750:
         print("Deciphered data:")
         return vysledek # Retrurns deciphered data
         # </>Vigenere < > 
-              
